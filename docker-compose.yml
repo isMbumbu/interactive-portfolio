@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16
+    container_name: portfolio_db
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: portfolioapp_web
+    env_file:
+      - .env  
+    environment:
+      DJANGO_SETTINGS_MODULE: core.settings.base 
+      
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src
+      - ./.env:/app/src/.env
+      
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
